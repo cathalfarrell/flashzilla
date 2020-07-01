@@ -82,7 +82,10 @@ struct CardView: View {
                             self.feedback.notificationOccurred(.error)
                         }
 
-                        // remove the card
+                        // Now that we detected that user wants to delete call
+                        // We call the closure defined when CardView struct was constructed
+                        // i.e. remove the card
+                        
                         self.removal?()
                     } else {
                         self.offset = .zero

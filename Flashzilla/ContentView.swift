@@ -38,6 +38,11 @@ struct ContentView: View {
                     )
                 ZStack {
                     ForEach(0..<cards.count, id: \.self) { index in
+
+                        // This card view struct has a trailing closure
+                        // That asks for the card to be removed when set
+                        // It gets set in the card view struct - when card is removed
+                        
                         CardView(card: self.cards[index]) {
                             withAnimation {
                                 self.removeCard(at: index)
