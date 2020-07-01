@@ -13,11 +13,11 @@ struct ContentView: View {
     @Environment(\.accessibilityEnabled) var accessibilityEnabled
 
     @State private var cards = [Card]()
-    @State private var timeRemaining = 100
+    @State private var timeRemaining = 10
     @State private var isActive = true
     @State private var showingEditScreen = false
-
-    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    @State private var isGameOver = false
+    @State private var timer = Timer.publish (every: 1, on: .current, in: .common).autoconnect()
 
     var body: some View {
         ZStack {
@@ -26,7 +26,7 @@ struct ContentView: View {
                 .scaledToFill()
                 .edgesIgnoringSafeArea(.all)
             VStack {
-                Text("Time: \(timeRemaining)")
+                Text(isGameOver ? "Game Over" : "Time: \(timeRemaining)")
                     .font(.largeTitle)
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
@@ -42,7 +42,7 @@ struct ContentView: View {
                         // This card view struct has a trailing closure
                         // That asks for the card to be removed when set
                         // It gets set in the card view struct - when card is removed
-                        
+
                         CardView(card: self.cards[index]) {
                             withAnimation {
                                 self.removeCard(at: index)
@@ -132,6 +132,13 @@ struct ContentView: View {
             guard self.isActive else { return }
             if self.timeRemaining > 0 {
                 self.timeRemaining -= 1
+
+                // Handle Game Over
+                if self.timeRemaining == 0 {
+                    print("🛑 Game Over")
+                    self.timer.upstream.connect().cancel()
+                    self.isGameOver = true
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
@@ -157,9 +164,11 @@ struct ContentView: View {
     }
 
     func resetCards() {
-        timeRemaining = 100
+        self.timer = Timer.publish (every: 1, on: .current, in:
+        .common).autoconnect()
+        timeRemaining = 10
         isActive = true
-
+        isGameOver = false
         loadData()
     }
 
