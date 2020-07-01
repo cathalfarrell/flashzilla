@@ -6,6 +6,7 @@
 //  Copyright © 2020 Cathal Farrell. All rights reserved.
 //
 
+import CoreHaptics
 import SwiftUI
 
 struct ContentView: View {
@@ -18,6 +19,24 @@ struct ContentView: View {
     @State private var showingEditScreen = false
     @State private var isGameOver = false
     @State private var timer = Timer.publish (every: 1, on: .current, in: .common).autoconnect()
+    // Custom Haptics Engine
+    @State private var engine: CHHapticEngine?
+
+    fileprivate func handleGameOver() {
+        // Handle Game Over
+
+        if self.timeRemaining == 1 {
+            self.prepareHaptics()
+        }
+
+        if self.timeRemaining == 0 {
+            print("🛑 Game Over")
+            self.timer.upstream.connect().cancel()
+            self.isGameOver = true
+
+            self.playComplexHaptic()
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -133,12 +152,7 @@ struct ContentView: View {
             if self.timeRemaining > 0 {
                 self.timeRemaining -= 1
 
-                // Handle Game Over
-                if self.timeRemaining == 0 {
-                    print("🛑 Game Over")
-                    self.timer.upstream.connect().cancel()
-                    self.isGameOver = true
-                }
+                self.handleGameOver()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
@@ -177,6 +191,52 @@ struct ContentView: View {
             if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
                 self.cards = decoded
             }
+        }
+    }
+
+    func prepareHaptics() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+
+        do {
+            self.engine = try CHHapticEngine()
+            try engine?.start()
+        } catch {
+            print("There was an error creating the engine: \(error.localizedDescription)")
+        }
+    }
+
+    fileprivate func createComplexHaptic(_ events: inout [CHHapticEvent]) {
+        for i in stride(from: 0, to: 1, by: 0.1) {
+            let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(i))
+            let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: Float(i))
+            let event = CHHapticEvent(eventType: .hapticTransient, parameters: [intensity, sharpness], relativeTime: i)
+            print("1. Intensity: \(intensity.value), sharpness: \(sharpness.value) time: \(i)")
+            events.append(event)
+        }
+
+        for i in stride(from: 0, to: 1, by: 0.1) {
+            let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(1 - i))
+            let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: Float(1 - i))
+            let event = CHHapticEvent(eventType: .hapticTransient, parameters: [intensity, sharpness], relativeTime: 1 + i)
+            print("2. Intensity: \(intensity.value), sharpness: \(sharpness.value) time: \(i)")
+            events.append(event)
+        }
+    }
+
+    func playComplexHaptic() {
+        // make sure that the device supports haptics
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        var events = [CHHapticEvent]()
+
+        createComplexHaptic(&events)
+
+        // convert those events into a pattern and play it immediately
+        do {
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine?.makePlayer(with: pattern)
+            try player?.start(atTime: 0)
+        } catch {
+            print("Failed to play pattern: \(error.localizedDescription).")
         }
     }
 }
