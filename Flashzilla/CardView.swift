@@ -91,6 +91,7 @@ struct CardView: View {
                         // Or if setting enabled retain wrong cards
 
                         if self.settings.retainWrongCards && self.offset.width < 0 {
+                            self.offset = .zero
                             self.removal?(false)
                         } else {
                             self.removal?(true)

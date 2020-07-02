@@ -62,7 +62,7 @@ struct ContentView: View {
                         }
                         .stacked(at: index, in: self.cards.count)
                         //Ensures only top card accessible
-                        //.allowsHitTesting(index == self.cards.count - 1)
+                        .allowsHitTesting(index == self.cards.count - 1)
                         .accessibility(hidden: index < self.cards.count - 1)
                         .environmentObject(self.settings)
                     }
@@ -245,6 +245,7 @@ struct ContentView: View {
     func saveData() {
         if let data = try? JSONEncoder().encode(cards) {
             UserDefaults.standard.set(data, forKey: "Cards")
+            print("Cards count is now: \(self.cards.count)")
         }
     }
 
