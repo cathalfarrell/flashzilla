@@ -20,15 +20,13 @@ class UserSettings: ObservableObject {
 struct SettingsView: View {
     //Using environment object to share settings in other screens
     @EnvironmentObject var settings: UserSettings
-
-    @State private var retainWrongCards = false
     
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
         NavigationView {
             Form {
-                Toggle(isOn: $retainWrongCards) {
+                Toggle(isOn: $settings.retainWrongCards) {
                     Text("Retain wrong answers in deck")
                 }
                 .padding()
@@ -42,7 +40,6 @@ struct SettingsView: View {
     }
 
     func dismiss() {
-        settings.retainWrongCards = retainWrongCards
         presentationMode.wrappedValue.dismiss()
     }
 }

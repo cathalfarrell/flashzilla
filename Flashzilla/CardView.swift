@@ -12,8 +12,10 @@ struct CardView: View {
     @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
     @Environment(\.accessibilityEnabled) var accessibilityEnabled //tells if voice over running
 
+    @EnvironmentObject var settings: UserSettings
+    
     let card: Card
-    var removal: (() -> Void)? = nil
+    var removal: ((Bool) -> Void)? = nil
 
     @State private var isShowingAnswer = false
     @State private var offset = CGSize.zero
@@ -85,8 +87,15 @@ struct CardView: View {
                         // Now that we detected that user wants to delete call
                         // We call the closure defined when CardView struct was constructed
                         // i.e. remove the card
+
+                        // Or if setting enabled retain wrong cards
+
+                        if self.settings.retainWrongCards && self.offset.width < 0 {
+                            self.removal?(false)
+                        } else {
+                            self.removal?(true)
+                        }
                         
-                        self.removal?()
                     } else {
                         self.offset = .zero
                     }

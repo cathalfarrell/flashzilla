@@ -48,7 +48,6 @@
 		8C37215E24A614A600DE92BA = {
 			isa = PBXGroup;
 			children = (
-				8C1FBBCA24ACB9320063A39F /* SettingsView.swift */,
 				8C37216924A614A600DE92BA /* Flashzilla */,
 				8C37216824A614A600DE92BA /* Products */,
 			);
@@ -65,6 +64,7 @@
 		8C37216924A614A600DE92BA /* Flashzilla */ = {
 			isa = PBXGroup;
 			children = (
+				8C1FBBCA24ACB9320063A39F /* SettingsView.swift */,
 				8C37216A24A614A600DE92BA /* AppDelegate.swift */,
 				8C37216C24A614A600DE92BA /* SceneDelegate.swift */,
 				8C37216E24A614A600DE92BA /* ContentView.swift */,

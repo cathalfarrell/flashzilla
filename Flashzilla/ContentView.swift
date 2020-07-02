@@ -17,7 +17,7 @@ struct ContentView: View {
     @Environment(\.accessibilityEnabled) var accessibilityEnabled
 
     @State private var cards = [Card]()
-    @State private var timeRemaining = 10
+    @State private var timeRemaining = 100
     @State private var isActive = true
     @State private var showingEditScreen = false
     @State private var showingSettingsScreen = false
@@ -51,15 +51,20 @@ struct ContentView: View {
                         // That asks for the card to be removed when set
                         // It gets set in the card view struct - when card is removed
 
-                        CardView(card: self.cards[index]) {
-                            withAnimation {
-                                self.removeCard(at: index)
+                        CardView(card: self.cards[index]) { remove in
+                            withAnimation{
+                                if remove {
+                                    self.removeCard(at: index)
+                                } else {
+                                    self.retainCard(at: index)
+                                }
                             }
                         }
                         .stacked(at: index, in: self.cards.count)
                         //Ensures only top card accessible
-                        .allowsHitTesting(index == self.cards.count - 1)
+                        //.allowsHitTesting(index == self.cards.count - 1)
                         .accessibility(hidden: index < self.cards.count - 1)
+                        .environmentObject(self.settings)
                     }
                 }
                 // Turns off interactions on card stack when timer is 0
@@ -190,18 +195,40 @@ struct ContentView: View {
         .onAppear(perform: resetCards)
     }
 
-    func removeCard(at index: Int) {
-        guard index >= 0 else { return } //stops removal if no cards
+    func retainCard(at index: Int) {
+        //stops removal if no cards
+        print("retain: \(index)")
+        guard index >= 0 else { return }
+        let card = cards[index]
+        
         cards.remove(at: index)
+        cards.insert(card, at: 0)
+
         if cards.isEmpty {
             isActive = false
         }
+
+        saveData()
+    }
+
+    func removeCard(at index: Int) {
+        print("remove: \(index)")
+        //stops removal if no cards
+        guard index >= 0 else { return }
+
+        cards.remove(at: index)
+
+        if cards.isEmpty {
+            isActive = false
+        }
+
+        saveData()
     }
 
     func resetCards() {
         self.timer = Timer.publish (every: 1, on: .current, in:
         .common).autoconnect()
-        timeRemaining = 10
+        timeRemaining = 100
         isActive = true
         isGameOver = false
         loadData()
@@ -212,6 +239,12 @@ struct ContentView: View {
             if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
                 self.cards = decoded
             }
+        }
+    }
+
+    func saveData() {
+        if let data = try? JSONEncoder().encode(cards) {
+            UserDefaults.standard.set(data, forKey: "Cards")
         }
     }
 
