@@ -10,6 +10,9 @@ import CoreHaptics
 import SwiftUI
 
 struct ContentView: View {
+
+    @EnvironmentObject var settings: UserSettings
+
     @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
     @Environment(\.accessibilityEnabled) var accessibilityEnabled
 
@@ -17,28 +20,14 @@ struct ContentView: View {
     @State private var timeRemaining = 10
     @State private var isActive = true
     @State private var showingEditScreen = false
+    @State private var showingSettingsScreen = false
     @State private var isGameOver = false
     @State private var timer = Timer.publish (every: 1, on: .current, in: .common).autoconnect()
     // Custom Haptics Engine
     @State private var engine: CHHapticEngine?
 
-    fileprivate func handleGameOver() {
-        // Handle Game Over
-
-        if self.timeRemaining == 1 {
-            self.prepareHaptics()
-        }
-
-        if self.timeRemaining == 0 {
-            print("🛑 Game Over")
-            self.timer.upstream.connect().cancel()
-            self.isGameOver = true
-
-            self.playComplexHaptic()
-        }
-    }
-
     var body: some View {
+
         ZStack {
             Image(decorative: "background")
                 .resizable()
@@ -85,6 +74,38 @@ struct ContentView: View {
                 }
             }
 
+            /*
+                // Challenge 2:
+                Add a settings screen that has a single option: when you get an answer one wrong that card goes back
+                into the array so the user can try it again.
+             */
+
+            //Top Left Settings Button
+            VStack {
+                HStack {
+                    Button(action: {
+                        // Open Settings View
+                        print("Open settings View")
+                        self.showingSettingsScreen = true
+                    }) {
+                       Image(systemName: "gear")
+                        .padding()
+                        .background(Color.black.opacity(0.7))
+                        .clipShape(Circle())
+                    }
+                    .accessibility(label: Text("Settings"))
+                    .accessibility(hint: Text("Change the settings"))
+                    Spacer()
+                }
+                Spacer()
+            }
+            .foregroundColor(.white)
+            .font(.largeTitle)
+            .padding()
+            .sheet(isPresented: $showingSettingsScreen) {
+                SettingsView().environmentObject(self.settings)
+            }
+
             //Edit Button - top right corner
 
             VStack {
@@ -106,6 +127,9 @@ struct ContentView: View {
             .foregroundColor(.white)
             .font(.largeTitle)
             .padding()
+            .sheet(isPresented: $showingEditScreen, onDismiss: resetCards) {
+                EditCards()
+            }
 
             // MARK: - Accessibility - shows buttons with voice overs
 
@@ -163,9 +187,6 @@ struct ContentView: View {
                 self.isActive = true
             }
         }
-        .sheet(isPresented: $showingEditScreen, onDismiss: resetCards) {
-            EditCards()
-        }
         .onAppear(perform: resetCards)
     }
 
@@ -191,6 +212,24 @@ struct ContentView: View {
             if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
                 self.cards = decoded
             }
+        }
+    }
+
+    fileprivate func handleGameOver() {
+        // Handle Game Over
+
+        if self.timeRemaining == 1 {
+            self.prepareHaptics()
+        }
+
+        if self.timeRemaining == 0 {
+            print("🛑 Game Over")
+            self.timer.upstream.connect().cancel()
+            self.isGameOver = true
+
+            self.playComplexHaptic()
+
+            print("User Settings Value: \(settings.retainWrongCards)")
         }
     }
 
